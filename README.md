@@ -26,7 +26,7 @@ A local, desktop-first electronics component inventory manager. Runs entirely on
 
 **1. Clone the repo**
 ```
-git clone https://github.com/yourusername/compdb.git
+git clone https://github.com/Charan-N/CompDB.git
 cd compdb
 ```
 
