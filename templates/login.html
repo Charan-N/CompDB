@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompDB — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Instrument Sans', sans-serif;
+    background: #0f1117;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e8eaf0;
+  }
+
+  .login-wrap {
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .login-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+
+  .login-logo-img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+  }
+
+  .login-logo-fallback {
+    width: 36px; height: 36px;
+    background: #3b82f6;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: white;
+    flex-shrink: 0;
+  }
+
+  .login-logo-text {
+    font-family: 'Geist Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+  }
+
+  .login-card {
+    width: 100%;
+    background: #1c2030;
+    border: 1.5px solid #2a3045;
+    border-radius: 14px;
+    padding: 28px 28px 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .login-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .login-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7fa8;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-family: 'Geist Mono', monospace;
+  }
+
+  .login-input {
+    background: #0f1117;
+    border: 1.5px solid #2a3045;
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #e8eaf0;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .login-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+  .login-input::placeholder { color: #3a4258; }
+
+  .login-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 11px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+  .login-btn:hover  { background: #2563eb; }
+  .login-btn:active { transform: scale(0.98); }
+
+  .login-error {
+    display: none;
+    margin-top: 12px;
+    padding: 9px 12px;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 6px;
+    color: #f87171;
+    font-size: 13px;
+    text-align: center;
+    font-family: 'Geist Mono', monospace;
+  }
+
+  .login-footer {
+    margin-top: 24px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: #2a3045;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+<div class="login-wrap">
+
+  <div class="login-logo">
+    <img src="/dbpng.png" class="login-logo-img" alt="CompDB"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="login-logo-fallback" style="display:none">⊕</div>
+    <span class="login-logo-text">CompDB</span>
+  </div>
+
+  <div class="login-card">
+    <div class="login-field">
+      <label class="login-label">Username</label>
+      <input class="login-input" id="username" type="text" placeholder="Enter username" autocomplete="username" autofocus>
+    </div>
+    <div class="login-field">
+      <label class="login-label">Password</label>
+      <input class="login-input" id="password" type="password" placeholder="Enter password" autocomplete="current-password">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Login</button>
+    <div class="login-error" id="login-error">Invalid username or password</div>
+  </div>
+
+  <div class="login-footer">Component Registry · Local</div>
+</div>
+
+<script>
+  async function doLogin() {
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value;
+    const errEl = document.getElementById('login-error');
+    errEl.style.display = 'none';
+    try {
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      });
+      if (res.ok) {
+        window.location.href = '/';
+      } else {
+        errEl.style.display = 'block';
+        document.getElementById('password').value = '';
+        document.getElementById('password').focus();
+      }
+    } catch(e) {
+      errEl.textContent = 'Could not connect to server.';
+      errEl.style.display = 'block';
+    }
+  }
+
+  // Allow Enter key on both fields
+  ['username','password'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# Database
+compdb.db
+*.db
+*_backup_*.db
+
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+#vbs
+*.vbs

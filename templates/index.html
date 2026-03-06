@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompDB</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Sidebar Nav -->
+  <nav class="sidebar-nav">
+    <div class="nav-logo">
+      <img src="/dbpng.png" class="nav-logo-img" alt="CompDB"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="nav-logo-mark" style="display:none">⊕</div>
+      <span class="nav-logo-text">CompDB</span>
+    </div>
+    <div class="nav-links">
+      <button class="nav-link active" data-page="inventory" onclick="navigate('inventory')">
+        <span class="nav-icon">▦</span><span>Inventory</span>
+      </button>
+      <button class="nav-link" data-page="wishlist" onclick="navigate('wishlist')">
+        <span class="nav-icon">✦</span><span>Wishlist</span>
+      </button>
+      <button class="nav-link" data-page="restock" onclick="navigate('restock')">
+        <span class="nav-icon">↺</span><span>Restock</span>
+      </button>
+      <button class="nav-link" data-page="heatmap" onclick="navigate('heatmap')">
+        <span class="nav-icon">◈</span><span>Heatmap</span>
+      </button>
+    </div>
+    <div class="nav-bottom">
+      <button class="nav-link" onclick="toggleTheme()" id="theme-btn">
+        <span class="nav-icon" id="theme-icon">◑</span><span id="theme-label">Dark Mode</span>
+      </button>
+      <button class="nav-link" onclick="openImport()">
+        <span class="nav-icon">⇪</span><span>Import CSV</span>
+      </button>
+      <button class="nav-link" onclick="doLogout()">
+        <span class="nav-icon">⎋</span><span>Logout</span>
+      </button>
+      <div class="nav-shortcuts-hint">
+        <span>Shortcuts ⌨</span>
+        <div class="shortcuts-tooltip">
+          <div class="shortcuts-tooltip-title">Keyboard Shortcuts</div>
+          <div class="shortcuts-grid">
+            <kbd>/</kbd><span>Search</span>
+            <kbd>N</kbd><span>Add part / item</span>
+            <kbd>U</kbd><span>Use session</span>
+            <kbd>S</kbd><span>Session history</span>
+            <kbd>I</kbd><span>Inventory</span>
+            <kbd>W</kbd><span>Wishlist</span>
+            <kbd>R</kbd><span>Restock</span>
+            <kbd>H</kbd><span>Heatmap</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- INVENTORY PAGE -->
+    <div id="page-inventory" class="page active">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Inventory</h1>
+          <p class="page-sub" id="inv-sub">Loading...</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="exportInventoryCSV()"><span>↓</span> Export CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="openSession()"><span>⚡</span> Use Components <kbd>U</kbd></button>
+          <button class="btn btn-primary btn-sm" onclick="openAddPart()"><span>+</span> Add Part <kbd>N</kbd></button>
+        </div>
+      </div>
+
+      <div id="low-stock-bar" class="alert-banner alert-amber" style="display:none"></div>
+
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input class="search-input" id="inv-search" type="text" placeholder="Search parts, values, packages... (/)" oninput="renderInventory()">
+        </div>
+        <select class="filter-select" id="inv-cat-filter" onchange="renderInventory()">
+          <option value="">All Categories</option>
+        </select>
+        <select class="filter-select" id="inv-sort" onchange="renderInventory()">
+          <option value="name">Sort: Name</option>
+          <option value="cat">Sort: Category</option>
+          <option value="qty-asc">Qty: Low → High</option>
+          <option value="qty-desc">Qty: High → Low</option>
+        </select>
+      </div>
+
+      <div class="parts-list" id="parts-list"></div>
+    </div>
+
+    <!-- WISHLIST PAGE -->
+    <div id="page-wishlist" class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Wishlist</h1>
+          <p class="page-sub" id="wish-sub">Components to acquire</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary btn-sm" onclick="openAddWishItem()"><span>+</span> Add to Wishlist</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input class="search-input" id="wish-search" type="text" placeholder="Search wishlist..." oninput="renderWishlist()">
+        </div>
+        <select class="filter-select" id="wish-cat-filter" onchange="renderWishlist()">
+          <option value="">All Categories</option>
+        </select>
+      </div>
+      <div id="wishlist-body" class="parts-list"></div>
+    </div>
+
+    <!-- RESTOCK PAGE -->
+    <div id="page-restock" class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Restock</h1>
+          <p class="page-sub">Low stock inventory + wishlist items</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="selectAllRestock()">Select All</button>
+          <button class="btn btn-primary btn-sm" onclick="generateShoppingList()">↓ Shopping List</button>
+        </div>
+      </div>
+      <div id="restock-body"></div>
+    </div>
+
+    <!-- HEATMAP PAGE -->
+    <div id="page-heatmap" class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Heatmap</h1>
+          <p class="page-sub">Part usage across all sessions</p>
+        </div>
+      </div>
+      <div id="heatmap-body"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODALS
+══════════════════════════════════════ -->
+
+<!-- Add Part Modal -->
+<div class="modal-overlay" id="modal-part" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-part-title">Add Part</div>
+        <div class="modal-sub" id="modal-part-sub">New component entry</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-part')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label class="form-label">Part Name *</label>
+          <input class="form-input" id="p-name" placeholder="e.g. Resistor, MLCC Cap, NPN Transistor">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select class="form-select" id="p-cat"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Value / Spec *</label>
+          <input class="form-input" id="p-value" placeholder="e.g. 10k, 100nF, 3.3V 1A">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Package</label>
+          <input class="form-input" id="p-pkg" placeholder="e.g. 0402, SOT-23, THT">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Quantity</label>
+          <input class="form-input" id="p-qty" type="number" min="0" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input class="form-input" id="p-loc" placeholder="e.g. Bin A3, Drawer 2">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Low Stock Alert</label>
+          <input class="form-input" id="p-low" type="number" min="0" placeholder="e.g. 10">
+        </div>
+        <div class="form-group">
+          <label class="form-label">MPN (optional)</label>
+          <input class="form-input" id="p-mpn" placeholder="e.g. RC0603FR-0710KL">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="p-notes" placeholder="Datasheet, source, application notes..."></textarea>
+      </div>
+
+      <!-- Duplicate warning -->
+      <div id="p-dup-warning" class="dup-warning" style="display:none">
+        <div class="dup-warning-title">⚠ Possible duplicate detected</div>
+        <div class="dup-warning-list" id="p-dup-list"></div>
+        <div class="dup-warning-actions">
+          <label><input type="radio" name="dup-action" value="add" checked> Add anyway as new entry</label>
+          <label><input type="radio" name="dup-action" value="cancel"> Cancel</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-part')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePart()">Save Part</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Part Modal -->
+<div class="modal-overlay" id="modal-edit-part" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title">Edit Part</div></div>
+      <button class="modal-close" onclick="closeModal('modal-edit-part')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label class="form-label">Part Name *</label>
+          <input class="form-input" id="ep-name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select class="form-select" id="ep-cat"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Value / Spec *</label>
+          <input class="form-input" id="ep-value">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Package</label>
+          <input class="form-input" id="ep-pkg">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Quantity</label>
+          <input class="form-input" id="ep-qty" type="number" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input class="form-input" id="ep-loc">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Low Stock Alert</label>
+          <input class="form-input" id="ep-low" type="number" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">MPN</label>
+          <input class="form-input" id="ep-mpn">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="ep-notes"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-part')">Cancel</button>
+      <button class="btn btn-danger-outline" onclick="deletePartConfirm()">Delete Part</button>
+      <button class="btn btn-primary" onclick="saveEditPart()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal-overlay" id="modal-category" style="display:none">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">Add Category</div>
+      <button class="modal-close" onclick="closeModal('modal-category')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Category Name *</label>
+        <input class="form-input" id="new-cat-name" placeholder="e.g. RF Module, Transformer">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-category')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCategory()">Add Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Wishlist Modal -->
+<div class="modal-overlay" id="modal-wish" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-wish-title">Add to Wishlist</div>
+        <div class="modal-sub">Components you want to acquire</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-wish')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label class="form-label">Name *</label>
+          <input class="form-input" id="w-name" placeholder="e.g. STM32F4 Discovery, ADS1115">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select class="form-select" id="w-cat"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Value / Spec</label>
+          <input class="form-input" id="w-value" placeholder="e.g. 16-bit ADC, 168MHz">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Package</label>
+          <input class="form-input" id="w-pkg" placeholder="e.g. Module, TQFP-64">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Qty Wanted</label>
+          <input class="form-input" id="w-qty" type="number" min="1" placeholder="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select class="form-select" id="w-priority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes / Source</label>
+        <textarea class="form-textarea" id="w-notes" placeholder="Where to buy, price estimate, why needed..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-wish')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWishItem()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Use Session Modal -->
+<div class="modal-overlay" id="modal-session" style="display:none">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">⚡ Use Components</div>
+        <div class="modal-sub">Build a session list then commit to deduct all at once</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-session')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label class="form-label">Session Name</label>
+          <input class="form-input" id="sess-name" placeholder="e.g. Spark V1 Proto, power stage debug">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <textarea class="form-textarea" id="sess-notes" placeholder="Any notes about this session..." style="min-height:52px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Search &amp; Add</label>
+        <div style="position:relative">
+          <input class="form-input" id="sess-search" type="text" placeholder="Type part name or value..." oninput="sessionSearch()" autocomplete="off">
+          <div class="dropdown-results" id="sess-results" style="display:none"></div>
+        </div>
+      </div>
+      <div>
+        <label class="form-label" style="margin-bottom:8px;display:block">
+          Session Items <span id="sess-count" style="color:var(--text-muted);font-weight:400"></span>
+        </label>
+        <div id="sess-items"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-session')">Cancel</button>
+      <button class="btn btn-orange" onclick="commitSession()">Commit &amp; Deduct</button>
+    </div>
+  </div>
+</div>
+
+<!-- Session History Modal -->
+<div class="modal-overlay" id="modal-history" style="display:none">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📋 Session History</div>
+        <div class="modal-sub">All past use sessions</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-history')">✕</button>
+    </div>
+    <div class="modal-body" id="history-body" style="max-height:65vh;overflow-y:auto;padding-right:4px;"></div>
+  </div>
+</div>
+
+<!-- Edit Session Notes Modal -->
+<div class="modal-overlay" id="modal-session-notes" style="display:none">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">Edit Session Notes</div>
+      <button class="modal-close" onclick="closeModal('modal-session-notes')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="sess-edit-notes" style="min-height:90px;" placeholder="Add notes for this session..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-session-notes')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSessionNotes()">Save Notes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk CSV Import Modal -->
+<div class="modal-overlay" id="modal-import" style="display:none">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">⇪ Bulk CSV Import</div>
+        <div class="modal-sub">Import parts from a CompDB-format CSV file</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-import')">✕</button>
+    </div>
+    <div class="modal-body" id="import-body">
+      <div class="import-step" id="import-step-upload">
+        <div class="import-format-hint">
+          <div class="import-format-title">Expected CSV headers</div>
+          <code>name, category, value, package, quantity, location, low_stock, mpn, notes</code>
+        </div>
+        <div class="form-group" style="margin-top:12px;">
+          <label class="form-label">Select CSV File</label>
+          <input type="file" accept=".csv" id="import-file-input" class="form-input" style="padding:7px 12px;">
+        </div>
+        <div id="import-upload-error" class="import-error" style="display:none"></div>
+      </div>
+
+      <div class="import-step" id="import-step-preview" style="display:none">
+        <div id="import-preview-content"></div>
+      </div>
+    </div>
+    <div class="modal-footer" id="import-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-import')">Cancel</button>
+      <button class="btn btn-primary" id="import-action-btn" onclick="importNext()">Preview</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
